@@ -418,11 +418,4 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMenu();
   });
-
-  document.addEventListener("mousedown", (event) => {
-    if (menu && !event.target.closest(".tc-original-menu") && event.button === 0) closeMenu();
-  });
-
-  window.addEventListener("resize", closeMenu);
-  window.addEventListener("scroll", () => { if (menu) closeMenu(); }, { passive: true });
 })();
