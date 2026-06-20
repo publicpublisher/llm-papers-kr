@@ -320,11 +320,15 @@
     let itemsHtml = elements
       .map((el, index) => ({ index, data: byId.get(el.getAttribute("data-original-id")) }))
       .filter((item) => item.data && item.data.text)
-      .map((item) => `
+      .map((item) => {
+        const cleanText = item.data.text
+          .replace(/<d-footnote[^>]*>[\s\S]*?<\/d-footnote>/g, "")
+          .replace(/<d-cite[^>]*>[\s\S]*?<\/d-cite>/g, "");
+        return `
         <li>
-          <span class="tc-original-label">원문 ${item.index + 1}</span>
-          <div class="tc-original-text">${item.data.text}</div>
-        </li>`)
+          <div class="tc-original-text">${cleanText}</div>
+        </li>`;
+      })
       .join("");
 
     itemsHtml = itemsHtml.replace(/<d-math([^>]*)>/g, '<span class="tc-math"$1>').replace(/<\/d-math>/g, '</span>');
