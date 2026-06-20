@@ -26,8 +26,13 @@
         position: fixed;
         z-index: 2147483647;
         width: min(620px, calc(100vw - 24px));
-        max-height: min(72vh, 680px);
+        height: auto;
+        min-width: 320px;
+        min-height: 240px;
+        max-width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
         overflow: auto;
+        resize: both;
         color: #172033;
         background: rgba(255, 255, 255, 0.985);
         border: 1px solid rgba(15, 23, 42, 0.16);
@@ -37,6 +42,10 @@
         line-height: 1.58;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
+      }
+      .tc-original-text .tc-math:not([block]) {
+        position: relative;
+        top: 0.15em;
       }
       .tc-original-menu * { box-sizing: border-box; }
       .tc-original-head {
