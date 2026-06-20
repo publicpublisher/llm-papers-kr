@@ -49,6 +49,8 @@
         top: 0.15em;
       }
       .tc-original-menu .katex { color: #172033; }
+      .tc-original-menu .katex * { box-sizing: content-box; }
+      .tc-original-menu .katex-display { overflow-x: auto; overflow-y: hidden; }
       .tc-resizer { position: absolute; z-index: 10; }
       .tc-resizer-t { top: -4px; left: 10px; right: 10px; height: 8px; cursor: n-resize; }
       .tc-resizer-b { bottom: -4px; left: 10px; right: 10px; height: 8px; cursor: s-resize; }
