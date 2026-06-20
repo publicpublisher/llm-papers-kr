@@ -25,12 +25,12 @@
       .tc-original-menu {
         position: fixed;
         z-index: 2147483647;
-        width: min(620px, calc(100vw - 24px));
+        width: min(92vw, 620px);
         height: auto;
-        min-width: 320px;
-        min-height: 240px;
-        max-width: calc(100vw - 24px);
-        max-height: calc(100vh - 24px);
+        min-width: 280px;
+        min-height: 200px;
+        max-width: 96vw;
+        max-height: 82vh;
         overflow: visible;
         display: flex;
         flex-direction: column;
@@ -48,9 +48,19 @@
         position: relative;
         top: 0.15em;
       }
-      .tc-original-menu .katex { color: #172033; }
+      .tc-original-menu .katex { 
+        color: #172033; 
+        max-width: none !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+      }
       .tc-original-menu .katex * { box-sizing: content-box; }
-      .tc-original-menu .katex-display { overflow-x: auto; overflow-y: hidden; }
+      .tc-original-menu .katex-display, .tc-original-menu d-math[block] { 
+        overflow-x: auto !important; 
+        overflow-y: hidden !important; 
+        max-width: 100% !important;
+        display: block !important;
+      }
       .tc-resizer { position: absolute; z-index: 10; }
       .tc-resizer-t { top: -4px; left: 10px; right: 10px; height: 8px; cursor: n-resize; }
       .tc-resizer-b { bottom: -4px; left: 10px; right: 10px; height: 8px; cursor: s-resize; }
@@ -75,6 +85,7 @@
         cursor: move;
         cursor: grab;
         user-select: none;
+        touch-action: none;
       }
       .tc-original-head:active {
         cursor: grabbing;
@@ -111,10 +122,16 @@
         white-space: nowrap;
       }
       .tc-original-close:hover, .tc-original-close:focus { background: #1d4ed8; outline: none; }
+      .tc-original-open {
+        border:0;border-radius:999px;padding:7px 11px;cursor:pointer;
+        background:#2563eb;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;
+      }
+      .tc-original-open:hover { background:#1d4ed8; }
       .tc-original-body { 
         padding: 14px 18px 16px 20px; 
         overflow-y: auto; 
         flex: 1;
+        -webkit-overflow-scrolling: touch;
       }
       .tc-original-list {
         margin: 0;
@@ -149,6 +166,51 @@
         color: #64748b;
         font-size: 11px;
       }
+      .tc-rubber-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 0 16px;
+        height: 48px;
+        border-radius: 24px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        cursor: pointer;
+        z-index: 2147483640;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        touch-action: manipulation;
+      }
+      .tc-rubber-btn.active {
+        background: #dc2626;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+      }
+      body.tc-rubber-mode {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        touch-action: none !important;
+        cursor: crosshair !important;
+      }
+      .tc-rubber-band-box {
+        position: absolute;
+        border: 2px solid rgba(37, 99, 235, 0.8);
+        background: rgba(37, 99, 235, 0.15);
+        pointer-events: none;
+        z-index: 2147483647;
+      }
+      [data-original-id].tc-pre-active {
+        outline: 2px dashed rgba(37, 99, 235, 0.6) !important;
+        outline-offset: 4px !important;
+        background: rgba(59,130,246,0.05) !important;
+        border-radius: 5px !important;
+      }
       @media (prefers-color-scheme: dark) {
         .tc-original-menu {
           color: #e5e7eb;
@@ -168,6 +230,15 @@
         .tc-original-label { background: rgba(147,197,253,.16); color: #bfdbfe; }
         .tc-original-help { color: #94a3b8; }
         .tc-original-menu .katex { color: #e5e7eb; }
+      }
+      @media (max-width: 640px) {
+        .tc-original-menu {
+          min-width: 260px;
+          width: 94vw;
+          max-height: 78vh;
+        }
+        .tc-original-body { padding: 12px 14px 14px 16px; }
+        .tc-rubber-btn { bottom: 18px; right: 18px; height: 44px; font-size: 13px; }
       }
     `;
     document.head.appendChild(style);
@@ -231,8 +302,8 @@
     if (!menu) return;
     const margin = 12;
     const rect = menu.getBoundingClientRect();
-    let left = event.clientX;
-    let top = event.clientY;
+    let left = event.clientX || (rect.left || margin);
+    let top = event.clientY || (rect.top || margin);
     if (left + rect.width + margin > window.innerWidth) left = window.innerWidth - rect.width - margin;
     if (top + rect.height + margin > window.innerHeight) top = window.innerHeight - rect.height - margin;
     menu.style.left = `${Math.max(margin, left)}px`;
@@ -256,7 +327,6 @@
         </li>`)
       .join("");
 
-    // Prevent Distill's auto-renderer from interfering by renaming <d-math> to <span class="tc-math">
     itemsHtml = itemsHtml.replace(/<d-math([^>]*)>/g, '<span class="tc-math"$1>').replace(/<\/d-math>/g, '</span>');
 
     menu = document.createElement("aside");
@@ -277,7 +347,10 @@
           <strong>선택한 번역 문단의 원문</strong>
           <a href="${escapeText(SOURCE_URL)}" target="_blank" rel="noopener noreferrer">${escapeText(SOURCE_URL)}</a>
         </div>
-        <button type="button" class="tc-original-close" aria-label="원문 보기 닫기">닫기</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button type="button" class="tc-original-open" aria-label="원문 위치 열기">원문 위치 열기</button>
+          <button type="button" class="tc-original-close" aria-label="원문 보기 닫기">닫기</button>
+        </div>
       </div>
       <div class="tc-original-body">
         <ul class="tc-original-list">${itemsHtml}</ul>
@@ -287,9 +360,110 @@
     menu.querySelector(".tc-original-close").addEventListener("click", closeMenu);
     positionMenu(event);
     setTimeout(() => menu && menu.querySelector(".tc-original-close").focus({ preventScroll: true }), 0);
+    // "원문 위치 열기" button handler
+    const openBtn = menu.querySelector(".tc-original-open");
+    if (openBtn) {
+      openBtn.addEventListener("click", () => {
+        if (!highlighted.length) return;
+
+        let bestEl = highlighted[0];
+
+        // Only use "closest to viewport center" when multiple paragraphs were rubber-band selected
+        if (highlighted.length > 1) {
+          const viewportCenterY = window.innerHeight / 2;
+          let bestDist = Infinity;
+
+          highlighted.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const elCenter = rect.top + rect.height / 2;
+            const dist = Math.abs(elCenter - viewportCenterY);
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestEl = el;
+            }
+          });
+        }
+
+        const origId = bestEl.getAttribute("data-original-id");
+        if (origId && byId.has(origId)) {
+          const item = byId.get(origId);
+          const temp = document.createElement("div");
+          temp.innerHTML = item.text;
+          const plain = (temp.textContent || temp.innerText || "").trim().replace(/\s+/g, " ");
+          
+          // Text Fragments(#:~:text=) 인코딩 전용 헬퍼.
+          // encodeURIComponent()는 '-'를 인코딩하지 않지만, WICG Text Fragments 스펙은
+          // start/end 토큰 안에 인코딩되지 않은 '-'가 하나라도 있으면 해당 디렉티브 전체를 파싱 실패 처리한다.
+          function encodeTextFragment(str) {
+            return encodeURIComponent(str).replace(/-/g, "%2D");
+          }
+
+          let fragment = "";
+          if (plain.length > 0) {
+            const words = plain.split(/\s+/).filter(w => w.length > 0);
+            if (words.length > 0) {
+              const prefix = words.slice(0, 6).join(" ");
+              const suffix = words.length > 12 ? words.slice(-6).join(" ") : "";
+              if (suffix) {
+                fragment = `#:~:text=${encodeTextFragment(prefix)},${encodeTextFragment(suffix)}`;
+              } else {
+                fragment = `#:~:text=${encodeTextFragment(prefix)}`;
+              }
+            }
+          }
+
+          // Fallback: find closest preceding heading ID
+          let closestHeadingId = "";
+          let targetIndex = DATA.findIndex(d => d.id === origId);
+          if (targetIndex !== -1) {
+            for (let i = targetIndex; i >= 0; i--) {
+              if (DATA[i].tag.match(/^h[1-6]$/i)) {
+                const match = DATA[i].text.match(/id=["']([^"']+)["']/);
+                if (match) {
+                  closestHeadingId = match[1];
+                } else {
+                  // Fallback: slugify the heading text (matches distill template behavior)
+                  const tempHeading = document.createElement("div");
+                  tempHeading.innerHTML = DATA[i].text;
+                  const plainHeading = (tempHeading.textContent || tempHeading.innerText || "").trim().toLowerCase();
+                  closestHeadingId = plainHeading.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                }
+                break;
+              }
+            }
+          }
+
+          const baseUrl = SOURCE_URL.split('#')[0];
+          
+          let finalUrl = baseUrl;
+          // Feature detect Text Fragment support (reliable for Chromium-based browsers)
+          const supportsTextFragments = ('fragmentDirective' in document);
+
+          if (supportsTextFragments && fragment) {
+            if (closestHeadingId) {
+              // Combine ID and Text Fragment!
+              // If text fragment fails (e.g. due to KaTeX), browser falls back to heading ID!
+              finalUrl += "#" + closestHeadingId + fragment.replace("#", "");
+            } else {
+              finalUrl += fragment;
+            }
+          } else if (closestHeadingId) {
+            // Fallback: use the closest heading ID for older browsers
+            finalUrl += "#" + closestHeadingId;
+          } else if (fragment) {
+            // Last resort
+            finalUrl += fragment;
+          }
+          
+          window.open(finalUrl, "_blank");
+        } else if (SOURCE_URL) {
+          window.open(SOURCE_URL, "_blank");
+        }
+      });
+    }
 
     // Make the menu draggable and resizable
-    let activeAction = null; // 'drag', 'resize-t', 'resize-r', ...
+    let activeAction = null;
     let actionStartX = 0;
     let actionStartY = 0;
     let menuStartRect = null;
@@ -305,7 +479,6 @@
         menu.style.right = 'auto';
         menu.style.bottom = 'auto';
       } else {
-        // Resize logic
         let newWidth = menuStartRect.width;
         let newHeight = menuStartRect.height;
         let newLeft = menuStartRect.left;
@@ -322,9 +495,8 @@
           newTop += dy;
         }
 
-        // Apply min width/height constraints
-        const minW = 320;
-        const minH = 240;
+        const minW = 260;
+        const minH = 200;
         if (newWidth < minW) {
           if (activeAction.includes('l')) newLeft -= (minW - newWidth);
           newWidth = minW;
@@ -420,4 +592,210 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMenu();
   });
+
+  // Rubber Band Mode Logic - ONE FINGER TOUCH SUPPORT
+  let rubberMode = false;
+  let rubberBtn = null;
+  let isRubberDragging = false;
+  let rubberBox = null;
+  let rubberStartX = 0;
+  let rubberStartY = 0;
+  let preActiveElements = [];
+  let cachedBlocks = [];
+
+  function ensureRubberBtn() {
+    if (rubberBtn) return;
+    ensureStyle();
+    rubberBtn = document.createElement('button');
+    rubberBtn.className = 'tc-rubber-btn';
+    rubberBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h10v10H7V7z"/>
+      </svg>
+      <span>다중 선택</span>
+    `;
+    rubberBtn.addEventListener('click', () => {
+      rubberMode = !rubberMode;
+      if (rubberMode) {
+        rubberBtn.classList.add('active');
+        rubberBtn.querySelector('span').innerText = '선택 취소';
+        document.body.classList.add('tc-rubber-mode');
+        closeMenu();
+      } else {
+        rubberBtn.classList.remove('active');
+        rubberBtn.querySelector('span').innerText = '다중 선택';
+        document.body.classList.remove('tc-rubber-mode');
+        cleanupRubber();
+      }
+    });
+    document.body.appendChild(rubberBtn);
+  }
+
+  function cleanupRubber() {
+    isRubberDragging = false;
+    cancelAnimationFrame(autoScrollRaf);
+    if (rubberBox) {
+      rubberBox.remove();
+      rubberBox = null;
+    }
+    preActiveElements.forEach(el => el.classList.remove('tc-pre-active'));
+    preActiveElements = [];
+    cachedBlocks = [];
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureRubberBtn);
+  } else {
+    ensureRubberBtn();
+  }
+
+  // Edge auto-scrolling logic
+  let autoScrollRaf = null;
+  let currentPointerY = 0;
+  
+  function autoScroll() {
+    if (!isRubberDragging) return;
+    
+    const edgeSize = 60;
+    const maxSpeed = 15;
+    let scrolled = false;
+
+    if (currentPointerY < edgeSize) {
+      const speed = Math.max(1, maxSpeed * (1 - currentPointerY / edgeSize));
+      window.scrollBy(0, -speed);
+      scrolled = true;
+    } else if (currentPointerY > window.innerHeight - edgeSize) {
+      const distance = window.innerHeight - currentPointerY;
+      const speed = Math.max(1, maxSpeed * (1 - distance / edgeSize));
+      window.scrollBy(0, speed);
+      scrolled = true;
+    }
+
+    if (isRubberDragging) {
+      autoScrollRaf = requestAnimationFrame(autoScroll);
+    }
+  }
+
+  let lastPageX = 0;
+  let lastPageY = 0;
+
+  function updateRubberBand(currentX, currentY) {
+    if (!rubberBox) return;
+    const left = Math.min(rubberStartX, currentX);
+    const top = Math.min(rubberStartY, currentY);
+    const width = Math.abs(currentX - rubberStartX);
+    const height = Math.abs(currentY - rubberStartY);
+
+    rubberBox.style.left = `${left}px`;
+    rubberBox.style.top = `${top}px`;
+    rubberBox.style.width = `${width}px`;
+    rubberBox.style.height = `${height}px`;
+
+    const rect = { left, top, right: left + width, bottom: top + height };
+    
+    preActiveElements.forEach(el => el.classList.remove('tc-pre-active'));
+    preActiveElements = [];
+
+    const seen = new Set();
+
+    cachedBlocks.forEach(block => {
+      if (
+        block.right >= rect.left && block.left <= rect.right &&
+        block.bottom >= rect.top && block.top <= rect.bottom
+      ) {
+        if (block.id && !seen.has(block.id)) {
+          seen.add(block.id);
+          preActiveElements.push(block.el);
+          block.el.classList.add('tc-pre-active');
+        }
+      }
+    });
+  }
+
+  // ONE FINGER TOUCH SUPPORT - pointerType check removed for touch
+  document.addEventListener('pointerdown', (e) => {
+    if (!rubberMode) return;
+    if (e.target.closest('.tc-rubber-btn') || e.target.closest('.tc-original-menu')) return;
+    
+    // Allow ALL pointers (mouse left click + ALL touch including one finger)
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    isRubberDragging = true;
+    rubberStartX = e.pageX;
+    rubberStartY = e.pageY;
+    lastPageX = e.pageX;
+    lastPageY = e.pageY;
+    currentPointerY = e.clientY;
+
+    rubberBox = document.createElement('div');
+    rubberBox.className = 'tc-rubber-band-box';
+    rubberBox.style.left = `${rubberStartX}px`;
+    rubberBox.style.top = `${rubberStartY}px`;
+    rubberBox.style.width = '0px';
+    rubberBox.style.height = '0px';
+    document.body.appendChild(rubberBox);
+
+    const scrollX = window.scrollX || document.documentElement.scrollLeft;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    cachedBlocks = Array.from(document.querySelectorAll(SELECTOR)).map(el => {
+      const elRect = el.getBoundingClientRect();
+      return {
+        el,
+        id: el.getAttribute("data-original-id"),
+        left: elRect.left + scrollX,
+        top: elRect.top + scrollY,
+        right: elRect.right + scrollX,
+        bottom: elRect.bottom + scrollY
+      };
+    });
+
+    preActiveElements = [];
+    e.preventDefault(); 
+    
+    cancelAnimationFrame(autoScrollRaf);
+    autoScrollRaf = requestAnimationFrame(autoScroll);
+  }, { passive: false });
+
+  document.addEventListener('pointermove', (e) => {
+    if (!isRubberDragging || !rubberBox) return;
+
+    lastPageX = e.pageX;
+    lastPageY = e.pageY;
+    currentPointerY = e.clientY;
+
+    updateRubberBand(lastPageX, lastPageY);
+  }, { passive: false });
+
+  window.addEventListener('scroll', () => {
+    if (!isRubberDragging || !rubberBox) return;
+    lastPageY = currentPointerY + (window.scrollY || document.documentElement.scrollTop);
+    updateRubberBand(lastPageX, lastPageY);
+  }, { passive: true });
+
+  document.addEventListener('pointerup', (e) => {
+    if (!isRubberDragging) return;
+    isRubberDragging = false;
+    cancelAnimationFrame(autoScrollRaf);
+    
+    if (rubberBox) {
+      rubberBox.remove();
+      rubberBox = null;
+    }
+
+    preActiveElements.forEach(el => el.classList.remove('tc-pre-active'));
+
+    if (preActiveElements.length > 0) {
+      const elementsToMenu = [...preActiveElements];
+      preActiveElements = [];
+      showMenu(e, elementsToMenu);
+    }
+  });
+
+  // Extra safety: also listen to pointercancel for mobile
+  document.addEventListener('pointercancel', () => {
+    if (isRubberDragging) {
+      cleanupRubber();
+    }
+  });
+
 })();

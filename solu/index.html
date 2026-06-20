@@ -469,6 +469,23 @@ d-contents nav>ul>li>a:hover {
 
 </style>
 <d-bibliography src="bibliography.bib"></d-bibliography>
+
+<style id="desktop-img-fix">
+/* Desktop Image Fix */
+@media (min-width: 768px) {
+    .gdoc-image, figure {
+        grid-column: text !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    .gdoc-image img, figure img {
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+}
+</style>
+
 </head>
 <body>
 <div class="article-header">
@@ -40342,5 +40359,5 @@ EYgbAv8/Q6IxZA+C3J4AAAAASUVORK5CYII=
 
 <script>window.TC_ORIGINAL_SOURCE_URL = "https://transformer-circuits.pub/2022/solu/index.html";</script>
 <script src="../assets/original-context-data/solu.js"></script>
-<script src="../assets/original-context-menu.js"></script>
+<script src="../assets/original-context-menu.js?v=6"></script>
 </body></html>
