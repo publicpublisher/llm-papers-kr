@@ -219,7 +219,7 @@
       .map((item) => `
         <li>
           <span class="tc-original-label">원문 ${item.index + 1}</span>
-          <div class="tc-original-text">${escapeText(item.data.text)}</div>
+          <div class="tc-original-text">${item.data.text}</div>
         </li>`)
       .join("");
 
@@ -243,6 +243,39 @@
     menu.querySelector(".tc-original-close").addEventListener("click", closeMenu);
     positionMenu(event);
     setTimeout(() => menu && menu.querySelector(".tc-original-close").focus({ preventScroll: true }), 0);
+
+    // Render math in the menu
+    const dMaths = menu.querySelectorAll("d-math");
+    if (dMaths.length > 0) {
+      function renderMath() {
+        for (const el of dMaths) {
+          try {
+            window.katex.render(el.textContent, el, { displayMode: el.hasAttribute("block"), throwOnError: false });
+          } catch (e) {
+            console.error("KaTeX render error", e);
+          }
+        }
+      }
+      if (window.katex) {
+        renderMath();
+      } else {
+        if (!document.getElementById("tc-katex-script")) {
+          const script = document.createElement("script");
+          script.id = "tc-katex-script";
+          script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js";
+          script.onload = renderMath;
+          document.head.appendChild(script);
+          
+          const css = document.createElement("link");
+          css.rel = "stylesheet";
+          css.href = "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css";
+          document.head.appendChild(css);
+        } else {
+          const script = document.getElementById("tc-katex-script");
+          script.addEventListener("load", renderMath);
+        }
+      }
+    }
   }
 
   document.addEventListener("contextmenu", (event) => {

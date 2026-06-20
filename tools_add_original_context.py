@@ -101,6 +101,27 @@ def clean_text(el: Tag) -> str:
     return text
 
 
+def extract_html(el: Tag) -> str:
+    clone = BeautifulSoup(str(el), "html.parser")
+    root = clone.find(el.name)
+    if root is None:
+        return ""
+    for bad in root.find_all(["script", "style", "template"]):
+        if bad.name == "script" and "math/tex" in bad.get("type", ""):
+            new_tag = clone.new_tag("d-math")
+            if bad.string:
+                new_tag.string = bad.string
+            if "mode=display" in bad.get("type", ""):
+                new_tag["block"] = ""
+            bad.replace_with(new_tag)
+        else:
+            bad.decompose()
+    
+    html = "".join(str(c) for c in root.contents).strip()
+    html = re.sub(r"\s+", " ", html)
+    return html
+
+
 def article(soup: BeautifulSoup) -> Tag:
     return soup.find("d-article") or soup.body or soup
 
@@ -159,18 +180,20 @@ def build_mapping(translated_html: str, original_html: str):
 
         if original_el is not None:
             text = clean_text(original_el)
+            html_content = extract_html(original_el)
             if method == "path":
                 direct += 1
             else:
                 fallback += 1
         else:
             text = ""
+            html_content = ""
             missing += 1
         original_id = f"orig-{idx}"
         el["data-original-id"] = original_id
         el["data-original-kind"] = el.name
         if text:
-            data.append({"id": original_id, "tag": el.name, "text": text})
+            data.append({"id": original_id, "tag": el.name, "text": html_content})
 
     return tr_soup, data, {"translated_blocks": len(tr_blocks), "original_blocks": len(or_blocks), "path": direct, "fallback": fallback, "missing": missing}
 
